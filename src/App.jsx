@@ -1587,7 +1587,7 @@ export default function App() {
               ) : (
                 Object.entries(regsOrArr).map(([region, places]) => (
                   <div key={region} style={{ marginBottom: 22 }}>
-                    <div style={{ fontSize: 10, letterSpacing: 3, color: "#1e3a50", textTransform: "uppercase", marginBottom: 10, fontWeight: 700 }}>{region}</div>
+                    <div style={{ fontSize: 13, letterSpacing: 3, color: "#3b6d92", textTransform: "uppercase", marginBottom: 10, fontWeight: 700 }}>{region}</div>
                     <PlaceList places={places} monthsToShow={monthsToShow} expanded={expanded} toggle={toggle} selectedMonth={selectedMonth} />
                   </div>
                 ))
