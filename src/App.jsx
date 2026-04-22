@@ -1059,26 +1059,9 @@ export default function App() {
       </div>
 
       {/* Legend */}
-      <div style={{
-        position: "fixed",
-        bottom: 20,
-        right: 20,
-        background: "#131c27dd",
-        border: "1px solid #1f2d3d",
-        borderRadius: 12,
-        padding: "12px 16px",
-        backdropFilter: "blur(8px)",
-        fontSize: 11,
-        color: "#3a5a6e"
-      }}>
-        <div style={{ marginBottom: 6, fontWeight: 600, color: "#4a7a8e" }}>RATING SCALE</div>
-        {[1,3,5,7,9,10].map(r => (
-          <div key={r} style={{ display: "flex", alignItems: "center", gap: 8, marginBottom: 3 }}>
-            <div style={{ width: 22, height: 6, borderRadius: 3, background: RATING_COLORS[r] }} />
-            <span style={{ color: RATING_COLORS[r] }}>{r} — {["","Avoid","Very Poor","Poor","Below Avg","Average","Good","Very Good","Excellent","Outstanding","Perfect"][r]}</span>
-          </div>
-        ))}
+
+
+        {}
       </div>
-    </div>
   );
 }
