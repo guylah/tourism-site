@@ -2267,9 +2267,9 @@ function PlaceList({ places, monthsToShow, expanded, toggle, selectedMonths, sho
                   const r = info.r;
                   const color = RATING_COLORS[r];
                   return (
-                    <div key={m} style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 28, flexShrink: 0 }}>
+                    <div key={m} style={{ display: "flex", flexDirection: "column", alignItems: "center", flex: 1, minWidth: 28 }}>
                       <div style={{ fontSize: 8, color: "#2a4a65", marginBottom: 2 }}>{MONTH_LABELS[m]}</div>
-                      <div style={{ background: color + "20", border: `1px solid ${color}50`, borderRadius: 6, padding: "3px 0", width: 28, textAlign: "center", fontSize: 11, fontWeight: 800, color }}>{r}</div>
+                      <div style={{ background: color + "20", border: `1px solid ${color}50`, borderRadius: 6, padding: "3px 0", width: "100%", textAlign: "center", fontSize: 11, fontWeight: 800, color }}>{r}</div>
                     </div>
                   );
                 })}
