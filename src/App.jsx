@@ -2260,16 +2260,16 @@ function PlaceList({ places, monthsToShow, expanded, toggle, selectedMonths, sho
                 </div>
                 <div style={{ color: "#1e3a50", fontSize: 18, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "none", marginLeft: 8, flexShrink: 0 }}>›</div>
               </div>
-              <div style={{ display: "flex", gap: 2, flexWrap: "nowrap" }}>
+              <div style={{ display: "flex", gap: 3, flexWrap: "nowrap", overflowX: "auto", paddingBottom: 2, WebkitOverflowScrolling: "touch" }}>
                 {monthsToShow.map(m => {
                   const info = place.months[m];
                   if (!info) return null;
                   const r = info.r;
                   const color = RATING_COLORS[r];
                   return (
-                    <div key={m} style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 28, flex: 1 }}>
+                    <div key={m} style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 28, flexShrink: 0 }}>
                       <div style={{ fontSize: 8, color: "#2a4a65", marginBottom: 2 }}>{MONTH_LABELS[m]}</div>
-                      <div style={{ background: color + "20", border: `1px solid ${color}50`, borderRadius: 6, padding: "3px 0", width: "100%", textAlign: "center", fontSize: 11, fontWeight: 800, color }}>{r}</div>
+                      <div style={{ background: color + "20", border: `1px solid ${color}50`, borderRadius: 6, padding: "3px 0", width: 28, textAlign: "center", fontSize: 11, fontWeight: 800, color }}>{r}</div>
                     </div>
                   );
                 })}
