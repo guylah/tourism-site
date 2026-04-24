@@ -1,45 +1,17 @@
-import { useState, useMemo } from "react";
-
-// ─── 12-MONTH DATA ───────────────────────────────────────────────────────────
-// Climate logic applied consistently per destination:
-// Philippines (Palawan/Manila/Boracay): dry Nov–May, wet Jun–Oct, typhoons Jul–Oct
-// Philippines Siargao: inverse — dry May–Oct, typhoons Nov–Jan
-// Cambodia: dry Nov–Apr, wet May–Oct
-// Nepal: spring Mar–May ✓, monsoon Jun–Sep ✗, autumn Oct–Nov ✓, winter Dec–Feb cold
-// Bali Canggu: dry Apr–Oct ✓, wet Nov–Mar ✗
-// Vietnam North (Hanoi): wet May–Oct, cool+dry Nov–Apr
-// Vietnam Central (Da Nang/Hoi An): dry Feb–Aug ✓, wet Sep–Jan (opposite to north)
-// Vietnam South (HCMC): dry Nov–Apr ✓, wet May–Oct
-// Vietnam Phu Quoc: dry Nov–May ✓, wet Jun–Oct ✗
-// Thailand North: smoky Mar–Apr ✗, green May–Oct, dry Nov–Feb ✓
-// Thailand Central/Bangkok: wet May–Oct, cool dry Nov–Feb ✓
-// Thailand Gulf (Samui/Phangan/Tao): dry May–Sep ✓ (opposite to Andaman), wet Oct–Jan
-// Thailand Andaman (Phuket/Krabi/Phi Phi/Lanta/Lipe/Khao Lak): dry Nov–Apr ✓, wet May–Oct ✗
-// Sri Lanka South/West (Mirissa/Weligama/Colombo): dry Dec–Mar ✓, wet May–Sep ✗
-// Sri Lanka East (Arugam Bay/Trincomalee): dry Apr–Sep ✓, wet Oct–Jan ✗
-// Sri Lanka Hill Country (Ella): relatively sheltered, best Dec–Mar & Jun–Sep
-// Sri Lanka Kalpitiya: kitesurfing Jun–Oct ✓
-// Japan (Tokyo/Kyoto/Osaka): best Mar–May & Oct–Nov, tsuyu Jun–Jul, hot Aug, cold Jan–Feb
-// Japan Hokkaido: best Jun–Sep (cool summer), winter for skiing Dec–Feb
-// Japan Okinawa: best Nov–May, typhoons Sep–Oct
-// Laos: dry Nov–Apr ✓, wet May–Oct
-// India North (Delhi/Agra): best Oct–Mar, extreme heat Apr–Jun, monsoon Jul–Sep
-// India Ladakh/Leh: open May–Oct ✓, closed Nov–Apr ✗
-// India Kashmir: best Apr–Oct ✓, snow Nov–Mar
-// India Hill Stations (Manali/Dharamshala/Shimla): best Apr–Jun & Sep–Oct, monsoon Jul–Aug
-// India Parvati Valley/Kasol: best Apr–Jun & Sep–Oct, monsoon Jul–Aug dangerous
-// India Goa: dry Nov–Mar ✓, monsoon Jun–Sep ✗
-// India South (Kerala/Varkala): wet Jun–Sep SW monsoon, dry Dec–Apr
-// India Bangalore/Hampi: moderate monsoon Jun–Sep
-// Taiwan Taipei: best Oct–Dec & Mar–Apr, typhoons Jul–Sep, cool/rainy Jan–Feb
+import { useState, useMemo, useRef, useEffect, useCallback } from "react";
 
 const ALL_MONTHS = ["jan","feb","mar","apr","may","jun","jul","aug","sep","oct","nov","dec"];
 const MONTH_LABELS = {jan:"Jan",feb:"Feb",mar:"Mar",apr:"Apr",may:"May",jun:"Jun",jul:"Jul",aug:"Aug",sep:"Sep",oct:"Oct",nov:"Nov",dec:"Dec"};
+const MONTH_FULL = {jan:"January",feb:"February",mar:"March",apr:"April",may:"May",jun:"June",jul:"July",aug:"August",sep:"September",oct:"October",nov:"November",dec:"December"};
+
+// Get current month key
+const CURRENT_MONTH = ALL_MONTHS[new Date().getMonth()];
 
 const data = [
   // ─── PHILIPPINES — PALAWAN ─────────────────────────────────────────────────
   {
     country:"Philippines", region:"Palawan", place:"El Nido",
+    lat:11.2027, lng:119.416,
     worstTimes:"Aug–Oct (peak typhoon season; island-hopping tours cancelled, flooding common)",
     months:{
       jan:{r:9,d:"Peak dry season. Clear blue skies, calm seas. Island-hopping at its finest. Busy but stunning."},
@@ -58,6 +30,7 @@ const data = [
   },
   {
     country:"Philippines", region:"Palawan", place:"Coron",
+    lat:11.9986, lng:120.2043,
     worstTimes:"Aug–Oct (typhoon season; wreck diving cancelled, visibility poor)",
     months:{
       jan:{r:9,d:"Prime dry season. Crystal-clear wreck diving. Kayangan Lake and Twin Lagoon at their best."},
@@ -77,6 +50,7 @@ const data = [
   // ─── PHILIPPINES — CITIES/ISLANDS ──────────────────────────────────────────
   {
     country:"Philippines", region:"Cities/Islands", place:"Manila",
+    lat:14.5995, lng:120.9842,
     worstTimes:"Jul–Oct (typhoon season; flooding, transport disruptions frequent)",
     months:{
       jan:{r:8,d:"Dry and cooler (28°C). Comfortable sightseeing. Intramuros and BGC at their most pleasant."},
@@ -95,6 +69,7 @@ const data = [
   },
   {
     country:"Philippines", region:"Cities/Islands", place:"Boracay",
+    lat:11.9674, lng:121.9248,
     worstTimes:"Jul–Oct (habagat monsoon; White Beach rough waves, red flags frequent)",
     months:{
       jan:{r:9,d:"Dry amihan season. Calm White Beach. Excellent water sports. Peak season crowds and prices."},
@@ -113,6 +88,7 @@ const data = [
   },
   {
     country:"Philippines", region:"Cities/Islands", place:"Siargao",
+    lat:9.8482, lng:126.045,
     worstTimes:"Nov–Feb (typhoon risk; strong swells overwhelm beginners, some accommodation closes)",
     months:{
       jan:{r:5,d:"Typhoon season winding down. Strong swells at Cloud 9 — experienced surfers only. Quieter."},
@@ -131,6 +107,7 @@ const data = [
   },
   {
     country:"Philippines", region:"Cities/Islands", place:"Bohol",
+    lat:9.85, lng:124.1435,
     worstTimes:"Aug–Oct (typhoon season; outdoor tours cancelled, roads can flood)",
     months:{
       jan:{r:9,d:"Dry season. Chocolate Hills vivid under blue skies. Tarsiers active. Balicasag diving excellent."},
@@ -150,6 +127,7 @@ const data = [
   // ─── CAMBODIA ──────────────────────────────────────────────────────────────
   {
     country:"Cambodia", region:"Cities/Regions", place:"Phnom Penh",
+    lat:11.5564, lng:104.9282,
     worstTimes:"Aug–Sep (heaviest monsoon rains; streets flood, heat and humidity peak)",
     months:{
       jan:{r:9,d:"Best month. Cool (25°C), dry, sunny. Riverside promenade lovely. All sights accessible."},
@@ -168,6 +146,7 @@ const data = [
   },
   {
     country:"Cambodia", region:"Cities/Regions", place:"Siem Reap",
+    lat:13.3671, lng:103.8448,
     worstTimes:"Aug–Sep (heaviest rain; Angkor Wat paths muddy, some areas flooded)",
     months:{
       jan:{r:9,d:"Ideal. Cool (25°C), dry, blue skies. Angkor Wat moat clear and reflective. Peak season."},
@@ -186,6 +165,7 @@ const data = [
   },
   {
     country:"Cambodia", region:"Cities/Regions", place:"Coastal Areas",
+    lat:10.6333, lng:103.5,
     worstTimes:"Jun–Oct (monsoon; Sihanoukville and Kep beaches rough, many resorts close)",
     months:{
       jan:{r:9,d:"Excellent. Sihanoukville beaches calm, clear sea. Koh Rong and Koh Ta Kiev paradisiac."},
@@ -205,6 +185,7 @@ const data = [
   // ─── NEPAL ─────────────────────────────────────────────────────────────────
   {
     country:"Nepal", region:"Kathmandu Valley", place:"Kathmandu",
+    lat:27.7172, lng:85.324,
     worstTimes:"Jul–Aug (monsoon; trails muddy, Himalayan views obscured by cloud almost daily)",
     months:{
       jan:{r:6,d:"Cold (3–15°C). Dry and clear. Himalayan views superb. Valley exploration comfortable but chilly."},
@@ -223,6 +204,7 @@ const data = [
   },
   {
     country:"Nepal", region:"Pokhara Region", place:"Pokhara",
+    lat:28.2096, lng:83.9856,
     worstTimes:"Jun–Aug (monsoon; Annapurna views hidden, paragliding cancelled on rainy days)",
     months:{
       jan:{r:6,d:"Cold. Clear winter skies give spectacular Machhapuchhre views. Quiet, peaceful Phewa Lake."},
@@ -242,6 +224,7 @@ const data = [
   // ─── INDONESIA ─────────────────────────────────────────────────────────────
   {
     country:"Indonesia", region:"Bali", place:"Canggu",
+    lat:-8.6478, lng:115.1385,
     worstTimes:"Jan–Feb (wettest months; daily heavy downpours, Batu Bolong Rd floods regularly)",
     months:{
       jan:{r:4,d:"Wettest month. Daily downpours. Surf is good but rain can be relentless. Indoor cafes busy."},
@@ -261,6 +244,7 @@ const data = [
   // ─── MALAYSIA ──────────────────────────────────────────────────────────────
   {
     country:"Malaysia", region:"General", place:"Malaysia (General)",
+    lat:3.139, lng:101.6869,
     worstTimes:"Oct–Jan on East Coast (northeast monsoon); May–Sep haze risk from Indonesian fires",
     months:{
       jan:{r:6,d:"KL fine (dry). East Coast (Perhentian) monsoon — avoid those. Langkawi good. Cameron Highlands lovely."},
@@ -280,6 +264,7 @@ const data = [
   // ─── VIETNAM — NORTH ───────────────────────────────────────────────────────
   {
     country:"Vietnam", region:"North", place:"Hanoi",
+    lat:21.0278, lng:105.8342,
     worstTimes:"Jul–Aug (hottest and rainiest; 38°C with very high humidity, heavy daily storms)",
     months:{
       jan:{r:6,d:"Cool (15–18°C) and sometimes misty. Dry. Atmospheric Old Quarter. Wrap up warm for mornings."},
@@ -298,6 +283,7 @@ const data = [
   },
   {
     country:"Vietnam", region:"North", place:"Sapa",
+    lat:22.3364, lng:103.8438,
     worstTimes:"Jan–Feb (coldest; can drop below 0°C, heavy mist obscures rice terraces for days)",
     months:{
       jan:{r:4,d:"Very cold (0–5°C). Frequent dense fog. Rice terraces invisible some days. Rare snow on high peaks."},
@@ -316,6 +302,7 @@ const data = [
   },
   {
     country:"Vietnam", region:"North", place:"Cat Ba",
+    lat:20.7278, lng:107.0482,
     worstTimes:"Nov–Mar (cold and grey; Halong Bay boat trips cold and misty, limited visibility)",
     months:{
       jan:{r:4,d:"Cold (15°C) and misty. Halong Bay boat trips possible but grey skies and rough seas common."},
@@ -334,6 +321,7 @@ const data = [
   },
   {
     country:"Vietnam", region:"North", place:"Tam Coc",
+    lat:20.2156, lng:105.9372,
     worstTimes:"Oct–Nov (seasonal flooding; caves inaccessible, rice fields underwater)",
     months:{
       jan:{r:6,d:"Cool and dry. Rice fields golden from recent harvest. Boat rides through karsts peaceful."},
@@ -352,6 +340,7 @@ const data = [
   },
   {
     country:"Vietnam", region:"North", place:"Mai Chau",
+    lat:20.66, lng:105.11,
     worstTimes:"Jul–Aug (heavy monsoon; hiking trails very slippery, valley roads can flood)",
     months:{
       jan:{r:6,d:"Cool (10–15°C). Dry. Stilt house stays cozy. Valley scenic with quiet, misty mornings."},
@@ -371,6 +360,7 @@ const data = [
   // ─── VIETNAM — CENTRAL ─────────────────────────────────────────────────────
   {
     country:"Vietnam", region:"Central", place:"Da Nang",
+    lat:16.0544, lng:108.2022,
     worstTimes:"Oct–Nov (typhoon season; heavy rain, flooding, dangerous beach conditions)",
     months:{
       jan:{r:6,d:"Cooler (22°C) and can be cloudy. Some rain. Ba Na Hills and city exploration still fine."},
@@ -389,6 +379,7 @@ const data = [
   },
   {
     country:"Vietnam", region:"Central", place:"Hoi An",
+    lat:15.8801, lng:108.338,
     worstTimes:"Oct–Nov (flood season; Ancient Town regularly knee-deep in water during typhoons)",
     months:{
       jan:{r:6,d:"Cooler, sometimes grey. Some rain. Ancient Town atmospheric and less crowded than peak."},
@@ -407,6 +398,7 @@ const data = [
   },
   {
     country:"Vietnam", region:"Central", place:"Phong Nha",
+    lat:17.6103, lng:106.309,
     worstTimes:"Oct–Nov (cave flooding; Son Doong and other caves access restricted, rivers dangerous)",
     months:{
       jan:{r:6,d:"Cool and sometimes rainy. Caves accessible. Jungle treks limited. Quiet and peaceful."},
@@ -426,6 +418,7 @@ const data = [
   // ─── VIETNAM — SOUTH ───────────────────────────────────────────────────────
   {
     country:"Vietnam", region:"South", place:"Ho Chi Minh City",
+    lat:10.8231, lng:106.6297,
     worstTimes:"Sep–Oct (heaviest rain; flash flooding common, streets inundated in parts of city)",
     months:{
       jan:{r:9,d:"Best time. Dry (28°C), low humidity. War Remnants Museum, Ben Thanh Market perfect. Very pleasant."},
@@ -444,6 +437,7 @@ const data = [
   },
   {
     country:"Vietnam", region:"South", place:"Da Lat",
+    lat:11.9404, lng:108.4583,
     worstTimes:"Aug–Oct (heaviest rain; waterfalls flood trails, roads slippery, mist constant)",
     months:{
       jan:{r:8,d:"Cool (15°C) and mostly dry. Flower gardens blooming. A refreshing highland retreat."},
@@ -462,6 +456,7 @@ const data = [
   },
   {
     country:"Vietnam", region:"South", place:"Phu Quoc",
+    lat:10.2899, lng:103.984,
     worstTimes:"Jun–Oct (southwest monsoon; beaches rough, sea murky, snorkeling/diving cancelled)",
     months:{
       jan:{r:9,d:"Best month. Dry, calm sea, stunning beaches. Snorkeling at Coral Garden excellent."},
@@ -481,6 +476,7 @@ const data = [
   // ─── THAILAND — NORTH ──────────────────────────────────────────────────────
   {
     country:"Thailand", region:"North", place:"Chiang Mai",
+    lat:18.7883, lng:98.9853,
     worstTimes:"Mar–Apr (smoke/haze season; burning fields create dangerous AQI — health risk)",
     months:{
       jan:{r:8,d:"Cool (15–25°C) and dry. Clear skies. Temples, night markets and trekking excellent."},
@@ -499,6 +495,7 @@ const data = [
   },
   {
     country:"Thailand", region:"North", place:"Chiang Rai",
+    lat:19.9105, lng:99.8406,
     worstTimes:"Mar–Apr (smoke/haze season; burning practices create poor air quality)",
     months:{
       jan:{r:8,d:"Cool and dry. White Temple in clear winter light stunning. Peaceful and uncrowded."},
@@ -517,6 +514,7 @@ const data = [
   },
   {
     country:"Thailand", region:"North", place:"Pai",
+    lat:19.3588, lng:98.4407,
     worstTimes:"Mar–Apr (smoke season from burning practices; valley hazy and unhealthy)",
     months:{
       jan:{r:8,d:"Very cool at night (10°C). Dry and clear. Pai canyon and waterfalls beautiful. Bohemian vibe."},
@@ -536,6 +534,7 @@ const data = [
   // ─── THAILAND — CENTRAL ────────────────────────────────────────────────────
   {
     country:"Thailand", region:"Central", place:"Bangkok",
+    lat:13.7563, lng:100.5018,
     worstTimes:"Sep–Oct (heaviest rain and flooding; some districts severely inundated)",
     months:{
       jan:{r:9,d:"Best month. Cool (26°C), dry, low humidity. Temples, markets and rooftops superb."},
@@ -554,6 +553,7 @@ const data = [
   },
   {
     country:"Thailand", region:"Central", place:"Kanchanaburi",
+    lat:14.0228, lng:99.5328,
     worstTimes:"Aug–Sep (river flooding; Erawan waterfall closed, Bridge over River Kwai surrounded by water)",
     months:{
       jan:{r:9,d:"Cool and dry. Bridge over River Kwai peaceful. Erawan Falls at low but beautiful levels."},
@@ -573,6 +573,7 @@ const data = [
   // ─── THAILAND — SOUTH GULF ─────────────────────────────────────────────────
   {
     country:"Thailand", region:"South (Gulf)", place:"Koh Samui",
+    lat:9.512, lng:100.0136,
     worstTimes:"Oct–Dec (Gulf coast monsoon; Samui gets its rain when Andaman is dry — heavy rain)",
     months:{
       jan:{r:7,d:"Gulf monsoon easing. Some rain still. Improving steadily through the month. Good value."},
@@ -591,6 +592,7 @@ const data = [
   },
   {
     country:"Thailand", region:"South (Gulf)", place:"Koh Phangan",
+    lat:9.731, lng:100.0136,
     worstTimes:"Oct–Dec (Gulf monsoon; flooding, rough seas, Full Moon Party still runs but accommodation can flood)",
     months:{
       jan:{r:7,d:"Gulf monsoon easing. Improving through month. Haad Rin quieter and good value."},
@@ -609,6 +611,7 @@ const data = [
   },
   {
     country:"Thailand", region:"South (Gulf)", place:"Koh Tao",
+    lat:10.1, lng:99.84,
     worstTimes:"Oct–Dec (Gulf monsoon; dive visibility drops, seas rough, some dive schools close)",
     months:{
       jan:{r:7,d:"Gulf monsoon easing. Visibility improving. Dive courses resuming. Good shoulder value."},
@@ -628,6 +631,7 @@ const data = [
   // ─── THAILAND — SOUTH ANDAMAN ──────────────────────────────────────────────
   {
     country:"Thailand", region:"South (Andaman)", place:"Phuket",
+    lat:7.8804, lng:98.3923,
     worstTimes:"May–Oct (Andaman southwest monsoon; beaches rough with red flags, rip currents dangerous)",
     months:{
       jan:{r:10,d:"Best month. Zero rain, calm seas. Patong, Karon and Kata beaches perfect. Peak season."},
@@ -646,6 +650,7 @@ const data = [
   },
   {
     country:"Thailand", region:"South (Andaman)", place:"Krabi",
+    lat:8.0863, lng:98.9063,
     worstTimes:"May–Oct (Andaman monsoon; island-hopping cancelled, rock climbing walls wet and slippery)",
     months:{
       jan:{r:10,d:"Peak season. Railay Beach and Ao Nang pristine. Rock climbing in perfect conditions."},
@@ -664,6 +669,7 @@ const data = [
   },
   {
     country:"Thailand", region:"South (Andaman)", place:"Koh Phi Phi",
+    lat:7.7407, lng:98.7784,
     worstTimes:"May–Oct (Andaman monsoon; ferries cancelled, Maya Bay inaccessible, rough seas)",
     months:{
       jan:{r:10,d:"Best month. Maya Bay and Viking Cave accessible. Stunning snorkeling. Lively but worth it."},
@@ -682,6 +688,7 @@ const data = [
   },
   {
     country:"Thailand", region:"South (Andaman)", place:"Koh Lanta",
+    lat:7.6134, lng:99.0362,
     worstTimes:"May–Oct (Andaman monsoon; island essentially closes, most resorts shut completely)",
     months:{
       jan:{r:9,d:"Peak season. Long Beach and Klong Dao Beach superb. Excellent diving at Hin Daeng."},
@@ -700,6 +707,7 @@ const data = [
   },
   {
     country:"Thailand", region:"South (Andaman)", place:"Koh Lipe",
+    lat:6.4877, lng:99.3046,
     worstTimes:"May–Oct (island fully closes; no ferry service, all resorts shut — uninhabited effectively)",
     months:{
       jan:{r:9,d:"Peak season. Pristine beaches and snorkeling. Pattaya Beach and Sunrise Beach superb."},
@@ -719,6 +727,7 @@ const data = [
   // ─── THAILAND — EAST ───────────────────────────────────────────────────────
   {
     country:"Thailand", region:"East", place:"Pattaya",
+    lat:12.9236, lng:100.8825,
     worstTimes:"Oct (heaviest Gulf-side rain and coastal flooding in some areas)",
     months:{
       jan:{r:8,d:"Cool and dry. Jomtien and Pattaya beaches calm. Water parks, golf and nightlife at their best."},
@@ -738,6 +747,7 @@ const data = [
   // ─── THAILAND — ANDAMAN NORTH ──────────────────────────────────────────────
   {
     country:"Thailand", region:"Andaman North", place:"Khao Lak",
+    lat:8.6377, lng:98.2534,
     worstTimes:"May–Oct (Andaman monsoon; Similan Islands closed by government order, beaches rough)",
     months:{
       jan:{r:10,d:"Best month. Similan Islands liveaboard season in full swing. Manta rays and whale sharks possible."},
@@ -757,6 +767,7 @@ const data = [
   // ─── SRI LANKA — SOUTH COAST ───────────────────────────────────────────────
   {
     country:"Sri Lanka", region:"South Coast", place:"Weligama",
+    lat:5.973, lng:80.429,
     worstTimes:"Jun–Aug (southwest monsoon; west-facing beaches rough with powerful surf for learners)",
     months:{
       jan:{r:9,d:"Best month. Calm sea, warm (28°C). Whale watching season peak. Surf for beginners perfect."},
@@ -775,6 +786,7 @@ const data = [
   },
   {
     country:"Sri Lanka", region:"South Coast", place:"Mirissa",
+    lat:5.9487, lng:80.4716,
     worstTimes:"Jun–Sep (southwest monsoon; beaches close, whale watching stops, rough seas)",
     months:{
       jan:{r:10,d:"Best month. Whale watching peak season (blue and sperm whales). Beach calm. Perfect conditions."},
@@ -793,6 +805,7 @@ const data = [
   },
   {
     country:"Sri Lanka", region:"South Coast", place:"Hiriketiya",
+    lat:5.9633, lng:80.6983,
     worstTimes:"Jun–Sep (southwest monsoon; horseshoe bay gets rough, waves blown out regularly)",
     months:{
       jan:{r:9,d:"Best. Calm, warm, beautiful horseshoe bay. Beginner and intermediate surf ideal."},
@@ -812,6 +825,7 @@ const data = [
   // ─── SRI LANKA — EAST COAST ────────────────────────────────────────────────
   {
     country:"Sri Lanka", region:"East Coast", place:"Arugam Bay",
+    lat:6.8404, lng:81.8368,
     worstTimes:"Nov–Mar (northeast monsoon; bay rough, big swells, town largely closed)",
     months:{
       jan:{r:3,d:"Northeast monsoon. Bay rough. Main Point often unsurfable. Most accommodation closed."},
@@ -830,6 +844,7 @@ const data = [
   },
   {
     country:"Sri Lanka", region:"East Coast", place:"Trincomalee",
+    lat:8.5874, lng:81.2152,
     worstTimes:"Nov–Jan (northeast monsoon; rough seas, diving impossible, town winds down)",
     months:{
       jan:{r:3,d:"Northeast monsoon. Rough seas. Nilaveli and Uppuveli beaches inaccessible. Diving cancelled."},
@@ -849,6 +864,7 @@ const data = [
   // ─── SRI LANKA — HILL COUNTRY ──────────────────────────────────────────────
   {
     country:"Sri Lanka", region:"Hill Country", place:"Ella",
+    lat:6.8667, lng:81.0466,
     worstTimes:"Oct–Nov (both monsoons affect hills; heavy rain, misty views, slippery trails)",
     months:{
       jan:{r:8,d:"Cool (18–22°C) and mostly dry. Nine Arch Bridge vivid. Little Adam's Peak in clear conditions."},
@@ -868,6 +884,7 @@ const data = [
   // ─── SRI LANKA — WEST COAST ────────────────────────────────────────────────
   {
     country:"Sri Lanka", region:"West Coast", place:"Colombo",
+    lat:6.9271, lng:79.8612,
     worstTimes:"May–Jun (southwest monsoon peaks; heavy rain, streets flood, some days very difficult)",
     months:{
       jan:{r:9,d:"Best month. Dry, sunny, comfortable. Fort district, Galle Face Green and food scene superb."},
@@ -886,6 +903,7 @@ const data = [
   },
   {
     country:"Sri Lanka", region:"West Coast", place:"Kalpitiya",
+    lat:8.2333, lng:79.7667,
     worstTimes:"Nov–Feb (northeast monsoon; wind too unpredictable for kitesurfing, lagoon rough)",
     months:{
       jan:{r:4,d:"Northeast monsoon. Wind gusty and unpredictable. Dolphin watching possible on calm days."},
@@ -905,6 +923,7 @@ const data = [
   // ─── JAPAN ─────────────────────────────────────────────────────────────────
   {
     country:"Japan", region:"Kanto", place:"Tokyo",
+    lat:35.6762, lng:139.6503,
     worstTimes:"Jun–Jul (tsuyu rainy season; grey skies, near-daily drizzle, very humid)",
     months:{
       jan:{r:7,d:"Cool (4–10°C), dry and sunny. Crowds thin post-New Year. Mt Fuji views superb. Good value."},
@@ -923,6 +942,7 @@ const data = [
   },
   {
     country:"Japan", region:"Kansai", place:"Osaka",
+    lat:34.6937, lng:135.5023,
     worstTimes:"Jun–Jul (tsuyu rainy season) and Aug (extreme heat and humidity 35°C+)",
     months:{
       jan:{r:7,d:"Cold (5°C) and dry. Dotonbori less crowded. Osaka Castle beautiful in winter. Good food."},
@@ -941,6 +961,7 @@ const data = [
   },
   {
     country:"Japan", region:"Kansai", place:"Kyoto",
+    lat:35.0116, lng:135.7681,
     worstTimes:"Aug (extreme heat 35°C+ and very humid; temples overcrowded, uncomfortable)",
     months:{
       jan:{r:7,d:"Cold (5°C), occasionally snowy. Kinkakuji in snow is unforgettable. Crowds thin. Atmospheric."},
@@ -959,6 +980,7 @@ const data = [
   },
   {
     country:"Japan", region:"Okinawa", place:"Okinawa",
+    lat:26.3344, lng:127.8056,
     worstTimes:"Sep–Oct (typhoon season; direct hits possible, beaches closed, transport disrupted)",
     months:{
       jan:{r:7,d:"Mild (18°C) and mostly dry. Snorkeling still possible. Cherry blossoms begin in January!"},
@@ -977,6 +999,7 @@ const data = [
   },
   {
     country:"Japan", region:"Hokkaido", place:"Hokkaido",
+    lat:43.2203, lng:142.8635,
     worstTimes:"Jan–Feb (extreme cold -20°C; travel difficult outside ski resorts, icy roads everywhere)",
     months:{
       jan:{r:6,d:"Extreme cold. World-class skiing at Niseko, Furano. Snow festival in Sapporo (February). For skiers."},
@@ -995,6 +1018,7 @@ const data = [
   },
   {
     country:"Japan", region:"Shikoku", place:"Shikoku",
+    lat:33.76, lng:133.5311,
     worstTimes:"Jun–Jul (tsuyu rainy season; 88-temple pilgrimage trail muddy and slippery)",
     months:{
       jan:{r:6,d:"Cool pilgrimage conditions. Iya Valley dramatic in winter mist. Fewer pilgrim crowds."},
@@ -1013,6 +1037,7 @@ const data = [
   },
   {
     country:"Japan", region:"Kyushu", place:"Kyushu",
+    lat:33.2232, lng:130.2988,
     worstTimes:"Jun–Jul (tsuyu rainy season; Mt Aso area foggy, some roads closed)",
     months:{
       jan:{r:6,d:"Cold but mild by Japanese standards. Nagasaki history sites atmospheric. Onsens excellent."},
@@ -1032,6 +1057,7 @@ const data = [
   // ─── LAOS ──────────────────────────────────────────────────────────────────
   {
     country:"Laos", region:"Cities", place:"Luang Prabang",
+    lat:19.8833, lng:102.1333,
     worstTimes:"Aug–Sep (Mekong flooding; streets near river flooded, some temple areas waterlogged)",
     months:{
       jan:{r:8,d:"Cool (18°C) and dry. Mekong low and calm. Alms giving ceremony atmospheric. Perfect for sightseeing."},
@@ -1050,6 +1076,7 @@ const data = [
   },
   {
     country:"Laos", region:"Cities", place:"Vang Vieng",
+    lat:18.9231, lng:102.4478,
     worstTimes:"Aug–Sep (Nam Song river flooding; tubing dangerous, kayaking cancelled, roads flooded)",
     months:{
       jan:{r:8,d:"Cool and dry. River activities running. Blue lagoon stunning. Karst scenery beautiful."},
@@ -1068,6 +1095,7 @@ const data = [
   },
   {
     country:"Laos", region:"Cities", place:"Vientiane",
+    lat:17.9757, lng:102.6331,
     worstTimes:"Jul–Sep (heaviest monsoon; streets flood, outdoor activities very limited)",
     months:{
       jan:{r:8,d:"Cool (20°C) and dry. Patuxai and That Luang beautiful. Mekong waterfront pleasant evenings."},
@@ -1087,6 +1115,7 @@ const data = [
   // ─── INDIA — NORTH ─────────────────────────────────────────────────────────
   {
     country:"India", region:"North", place:"Delhi",
+    lat:28.6139, lng:77.209,
     worstTimes:"May–Jun (extreme heat 45°C+, dangerous for extended outdoor activity)",
     months:{
       jan:{r:8,d:"Cool (8–20°C) and dry. Mughal monuments in comfortable conditions. Fog possible."},
@@ -1105,6 +1134,7 @@ const data = [
   },
   {
     country:"India", region:"North", place:"Rishikesh",
+    lat:30.0869, lng:78.2676,
     worstTimes:"Jul–Aug (Ganges flooding; rafting banned, ghats submerged, landslide risk on roads)",
     months:{
       jan:{r:6,d:"Cold (5–15°C). Dry. Yoga and ashrams very active. Ghats quiet and spiritual. River low."},
@@ -1123,6 +1153,7 @@ const data = [
   },
   {
     country:"India", region:"North", place:"Dharamshala",
+    lat:32.219, lng:76.3234,
     worstTimes:"Jul–Aug (heavy monsoon; landslides cut roads regularly, trekking very dangerous)",
     months:{
       jan:{r:5,d:"Very cold (0–5°C). Snow on McLeod Ganj. Roads can ice. Beautiful but demanding."},
@@ -1141,6 +1172,7 @@ const data = [
   },
   {
     country:"India", region:"North", place:"Manali",
+    lat:32.2432, lng:77.1892,
     worstTimes:"Jan–Feb (extreme snowfall; Rohtang Pass closed, town sometimes cut off, temperatures -15°C)",
     months:{
       jan:{r:3,d:"Extreme cold (-10 to -15°C). Rohtang Pass closed. Town can be cut off. Snow activities only."},
@@ -1159,6 +1191,7 @@ const data = [
   },
   {
     country:"India", region:"North", place:"Kasol",
+    lat:32.0094, lng:77.3144,
     worstTimes:"Jul–Aug (Parvati River floods; camping destroyed, trails to Kheerganga dangerous)",
     months:{
       jan:{r:4,d:"Heavy snow. Kasol accessible but Kheerganga trail closed. Cold and quiet."},
@@ -1177,6 +1210,7 @@ const data = [
   },
   {
     country:"India", region:"North", place:"Parvati Valley",
+    lat:32.01, lng:77.35,
     worstTimes:"Jul–Sep (dangerous flooding and landslides; multiple fatalities annually — serious risk)",
     months:{
       jan:{r:3,d:"Heavy snow. Upper valley completely inaccessible. Very cold. Only Kasol town accessible."},
@@ -1195,6 +1229,7 @@ const data = [
   },
   {
     country:"India", region:"North", place:"Leh",
+    lat:34.1526, lng:77.577,
     worstTimes:"Jan–Feb (extreme cold -20°C, roads completely closed, altitude of 3500m intensifies everything)",
     months:{
       jan:{r:3,d:"Extreme cold (-20°C nights). Chadar Trek on frozen Zanskar — for serious adventurers only."},
@@ -1213,6 +1248,7 @@ const data = [
   },
   {
     country:"India", region:"North", place:"Kashmir",
+    lat:33.2778, lng:75.3412,
     worstTimes:"Dec–Feb (heavy snowfall; Srinagar sometimes cut off, roads dangerous, extreme cold)",
     months:{
       jan:{r:4,d:"Heavy snow (-5°C). Dal Lake sometimes frozen. Skiing at Gulmarg excellent. For snow lovers."},
@@ -1231,6 +1267,7 @@ const data = [
   },
   {
     country:"India", region:"North", place:"Shimla",
+    lat:31.1048, lng:77.1734,
     worstTimes:"Jul–Aug (heavy monsoon; landslides on Kalka-Shimla road, toy train frequently disrupted)",
     months:{
       jan:{r:6,d:"Heavy snow on Mall Road. Winter wonderland. Toy train running. Cold but atmospheric."},
@@ -1250,6 +1287,7 @@ const data = [
   // ─── INDIA — WEST ──────────────────────────────────────────────────────────
   {
     country:"India", region:"West", place:"Goa (Arambol)",
+    lat:15.6868, lng:73.704,
     worstTimes:"Jun–Sep (southwest monsoon; beaches closed by lifeguards, rip currents dangerous, most shacks close)",
     months:{
       jan:{r:9,d:"Peak season. Arambol Beach buzzing. Warm (28°C), sunny, calm sea. Full hippie/bohemian scene."},
@@ -1268,6 +1306,7 @@ const data = [
   },
   {
     country:"India", region:"West", place:"Pushkar",
+    lat:26.4898, lng:74.5511,
     worstTimes:"May–Jun (extreme heat 42°C+; desert town becomes uncomfortably hot for most visitors)",
     months:{
       jan:{r:8,d:"Cool (15°C nights) and dry. Brahma temple and sacred lake beautiful. Comfortable sightseeing."},
@@ -1287,6 +1326,7 @@ const data = [
   // ─── INDIA — SOUTH ─────────────────────────────────────────────────────────
   {
     country:"India", region:"South", place:"Kerala",
+    lat:10.8505, lng:76.2711,
     worstTimes:"Jun–Jul (southwest monsoon strongest; backwaters can flood, houseboat routes disrupted)",
     months:{
       jan:{r:9,d:"Best month. Dry, warm (28°C). Backwaters calm, Munnar tea estates clear. Whale watching off coast."},
@@ -1305,6 +1345,7 @@ const data = [
   },
   {
     country:"India", region:"South", place:"Varkala",
+    lat:8.7379, lng:76.7163,
     worstTimes:"Jun–Aug (monsoon; cliff beach closed by lifeguards, enormous waves, rip currents)",
     months:{
       jan:{r:9,d:"Best month. Cliff path restaurants open. Calm sea. Yoga retreats in full swing."},
@@ -1323,6 +1364,7 @@ const data = [
   },
   {
     country:"India", region:"South", place:"Munnar",
+    lat:10.0889, lng:77.0595,
     worstTimes:"Oct (northeast monsoon peak; severe landslides, waterfalls flood trails)",
     months:{
       jan:{r:8,d:"Cool (8–15°C), mostly dry. Tea estates in full production. Eravikulam NP peak season."},
@@ -1341,6 +1383,7 @@ const data = [
   },
   {
     country:"India", region:"South", place:"Hampi",
+    lat:15.335, lng:76.46,
     worstTimes:"Apr–Jun (extreme heat 40°C+; the boulder landscape becomes an oven, dangerous to explore midday)",
     months:{
       jan:{r:9,d:"Best month. Cool (20°C), dry. Ruins exploration comfortable all day. Photography excellent."},
@@ -1359,6 +1402,7 @@ const data = [
   },
   {
     country:"India", region:"South", place:"Bangalore",
+    lat:12.9716, lng:77.5946,
     worstTimes:"Oct–Nov (northeast monsoon; severe traffic flooding, commuting disrupted)",
     months:{
       jan:{r:8,d:"Pleasant (22–28°C). City's café, brewery and restaurant scene thriving. Nandi Hills accessible."},
@@ -1377,6 +1421,7 @@ const data = [
   },
   {
     country:"India", region:"South", place:"Cochin (Kochi)",
+    lat:9.9312, lng:76.2673,
     worstTimes:"Jun–Jul (southwest monsoon at its peak; Fort Kochi streets flood, ferry services disrupted)",
     months:{
       jan:{r:9,d:"Best month. Dry, comfortable (28°C). Chinese fishing nets at sunrise magical. Fort Kochi beautiful."},
@@ -1396,6 +1441,7 @@ const data = [
   // ─── INDIA — EAST/NORTHEAST ────────────────────────────────────────────────
   {
     country:"India", region:"East/Northeast", place:"Sikkim",
+    lat:27.533, lng:88.5122,
     worstTimes:"Jun–Aug (heavy monsoon; major landslides block roads frequently, trekking dangerous)",
     months:{
       jan:{r:5,d:"Cold (-5°C at higher altitude). Some roads closed. Pelling views of Kangchenjunga superb on clear days."},
@@ -1415,6 +1461,7 @@ const data = [
   // ─── INDIA — COASTAL KARNATAKA ─────────────────────────────────────────────
   {
     country:"India", region:"Coastal Karnataka", place:"Om Beach",
+    lat:14.5196, lng:74.323,
     worstTimes:"Jun–Sep (violent southwest monsoon; Om Beach completely inaccessible, dangerous waves)",
     months:{
       jan:{r:9,d:"Best month. Gokarna beaches calm. Om Beach, Half Moon Beach pristine. Backpacker scene buzzing."},
@@ -1434,6 +1481,7 @@ const data = [
   // ─── TAIWAN ────────────────────────────────────────────────────────────────
   {
     country:"Taiwan", region:"Cities", place:"Taipei",
+    lat:25.033, lng:121.5654,
     worstTimes:"Jul–Sep (typhoon season; direct hits possible, extreme rainfall, some days dangerous)",
     months:{
       jan:{r:6,d:"Cool (12–18°C) and drizzly. Night markets and hot spring season. Indoor culture excellent."},
@@ -1452,53 +1500,636 @@ const data = [
   },
 ];
 
-// ─── UI COMPONENTS ───────────────────────────────────────────────────────────
+// ─── CONSTANTS ────────────────────────────────────────────────────────────────
 const RATING_COLORS = [
-  "", // 0 unused
-  "#c0392b", // 1
-  "#e74c3c", // 2
-  "#e67e22", // 3
-  "#f39c12", // 4
-  "#f1c40f", // 5
-  "#d4ac0d", // 6
-  "#27ae60", // 7
-  "#1e8449", // 8
-  "#148f77", // 9
-  "#117864", // 10
+  "","#c0392b","#c0392b","#e67e22","#f39c12","#f1c40f",
+  "#d4ac0d","#27ae60","#1e8449","#148f77","#0e6655"
 ];
-
-const RATING_LABELS = [
-  "","Avoid","Avoid","Poor","Below Avg","Average",
-  "Decent","Good","Great","Excellent","Perfect"
-];
-
+const RATING_LABELS = ["","Avoid","Avoid","Poor","Below Avg","Average","Decent","Good","Great","Excellent","Perfect"];
 const countries = [...new Set(data.map(d => d.country))];
+ 
+// ─── PROJECTION ───────────────────────────────────────────────────────────────
+// Mercator projection — maps lat/lng to normalised [0,1] coords
+// Bounds cover all destinations: lat ~-10 to 52, lng 63 to 148
+const BOUNDS = { minLat: -12, maxLat: 52, minLng: 55, maxLng: 148 };
+ 
+function mercY(lat) {
+  const r = (lat * Math.PI) / 180;
+  return Math.log(Math.tan(Math.PI / 4 + r / 2));
+}
+ 
+// Returns {nx, ny} in 0..1 normalised space
+function project(lat, lng) {
+  const { minLat, maxLat, minLng, maxLng } = BOUNDS;
+  const nx = (lng - minLng) / (maxLng - minLng);
+  const yMin = mercY(minLat);
+  const yMax = mercY(maxLat);
+  const ny = 1 - (mercY(lat) - yMin) / (yMax - yMin);
+  return { nx, ny };
+}
+ 
+// Compute the natural aspect ratio of the projected bounds so the map is
+// never non-uniformly stretched. In Mercator, x is linear in longitude
+// (radians) and y is log-tan, so we compare the two spans in radians.
+const _mercYMin = mercY(BOUNDS.minLat);
+const _mercYMax = mercY(BOUNDS.maxLat);
+const _mercSpan = _mercYMax - _mercYMin;                       // radians
+const _lngSpanRad = (BOUNDS.maxLng - BOUNDS.minLng) * Math.PI / 180;
+const MAP_ASPECT = _lngSpanRad / _mercSpan;                    // natural w/h
 
+// Convert normalised coords to canvas pixel given zoom/pan state.
+// Uses a uniform scale (letterbox) so the Mercator projection is correct.
+function toCanvas(nx, ny, cw, ch, zoom, panX, panY) {
+  const scale = Math.min(cw / MAP_ASPECT, ch);
+  const mapW = MAP_ASPECT * scale;
+  const mapH = scale;
+  const offsetX = (cw - mapW) / 2;
+  const offsetY = (ch - mapH) / 2;
+  const x = offsetX + nx * mapW * zoom + panX;
+  const y = offsetY + ny * mapH * zoom + panY;
+  return { x, y };
+}
+ 
+// ─── MAP VIEW ─────────────────────────────────────────────────────────────────
+function MapView({ mapMonth, setMapMonth }) {
+  const canvasRef = useRef(null);
+  const containerRef = useRef(null);
+  const [dims, setDims] = useState({ w: 900, h: 560 });
+  const [tooltip, setTooltip] = useState(null);
+  const [tooltipPos, setTooltipPos] = useState({ x: 0, y: 0 });
+  const [geoFeatures, setGeoFeatures] = useState(null);
+  const [loadingGeo, setLoadingGeo] = useState(true);
+ 
+  // Zoom/pan state
+  const [zoom, setZoom] = useState(1);
+  const [panX, setPanX] = useState(0);
+  const [panY, setPanY] = useState(0);
+  const isDragging = useRef(false);
+  const dragStart = useRef({ x: 0, y: 0, panX: 0, panY: 0 });
+  const lastPinchDist = useRef(null);
+  const animRef = useRef(null);
+ 
+  // Clamp pan so the map edges never scroll past the canvas edges.
+  // toCanvas places the left edge at (offsetX + panX) and the right edge at
+  // (offsetX + mapW*zoom + panX). We need:
+  //   left  edge ≤ 0  →  panX ≤ -offsetX
+  //   right edge ≥ cw →  panX ≥ cw - mapW*zoom - offsetX
+  // Same logic applies vertically with offsetY / mapH.
+  const clampPan = useCallback((px, py, z, cw, ch) => {
+    const scale = Math.min(cw / MAP_ASPECT, ch);
+    const mapW = MAP_ASPECT * scale * z;
+    const mapH = scale * z;
+    const offsetX = (cw - MAP_ASPECT * scale) / 2;
+    const offsetY = (ch - scale) / 2;
+    const minX = cw - mapW - offsetX;   // right edge at cw
+    const maxX = -offsetX;              // left edge at 0
+    const minY = ch - mapH - offsetY;   // bottom edge at ch
+    const maxY = -offsetY;              // top edge at 0
+    return {
+      px: Math.max(minX, Math.min(maxX, px)),
+      py: Math.max(minY, Math.min(maxY, py)),
+    };
+  }, []);
+ 
+  // Fetch real GeoJSON land data (Natural Earth 110m simplified)
+  useEffect(() => {
+    fetch("https://cdn.jsdelivr.net/npm/world-atlas@2/countries-110m.json")
+      .then(r => r.json())
+      .then(topo => {
+        // Convert TopoJSON to GeoJSON manually (inline topojson-client logic)
+        const land = topoToGeo(topo, topo.objects.countries);
+        setGeoFeatures(land.features);
+        setLoadingGeo(false);
+      })
+      .catch(() => {
+        // Fallback: try alternative CDN
+        fetch("https://unpkg.com/world-atlas@2/countries-110m.json")
+          .then(r => r.json())
+          .then(topo => {
+            const land = topoToGeo(topo, topo.objects.countries);
+            setGeoFeatures(land.features);
+            setLoadingGeo(false);
+          })
+          .catch(() => setLoadingGeo(false));
+      });
+  }, []);
+ 
+  // Resize observer — height is derived from width using the map's natural
+  // aspect ratio so the map always fills the full canvas width with no letterbox.
+  useEffect(() => {
+    const update = () => {
+      if (containerRef.current) {
+        const w = containerRef.current.offsetWidth;
+        const h = Math.min(Math.round(w / MAP_ASPECT), 560);
+        setDims({ w, h });
+      }
+    };
+    update();
+    const ro = new ResizeObserver(update);
+    if (containerRef.current) ro.observe(containerRef.current);
+    return () => ro.disconnect();
+  }, []);
+ 
+  const { w, h } = dims;
+ 
+  // Pre-compute place screen positions (in normalised space)
+  const placesNorm = useMemo(() => {
+    return data
+      .filter(d => d.lat != null && d.lng != null)
+      .map(d => {
+        const { nx, ny } = project(d.lat, d.lng);
+        const rating = d.months[mapMonth]?.r ?? 5;
+        const desc = d.months[mapMonth]?.d ?? "";
+        return { ...d, nx, ny, rating, desc };
+      });
+  }, [mapMonth]);
+ 
+  // Draw to canvas
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const ctx = canvas.getContext("2d");
+    const dpr = window.devicePixelRatio || 1;
+    canvas.width = w * dpr;
+    canvas.height = h * dpr;
+    ctx.scale(dpr, dpr);
+ 
+    // Ocean background
+    ctx.fillStyle = "#0d1e30";
+    ctx.fillRect(0, 0, w, h);
+ 
+    // Grid lines
+    ctx.strokeStyle = "#132030";
+    ctx.lineWidth = 0.5;
+    for (const lat of [-5, 0, 10, 20, 30, 40, 50]) {
+      const { nx, ny } = project(lat, BOUNDS.minLng);
+      const { x: x0, y: y0 } = toCanvas(nx, ny, w, h, zoom, panX, panY);
+      const { x: x1 } = toCanvas(1, ny, w, h, zoom, panX, panY);
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x1, y0); ctx.stroke();
+    }
+    for (const lng of [70, 80, 90, 100, 110, 120, 130, 140]) {
+      const { nx } = project(BOUNDS.minLat, lng);
+      const { x: x0, y: y0 } = toCanvas(nx, 0, w, h, zoom, panX, panY);
+      const { y: y1 } = toCanvas(nx, 1, w, h, zoom, panX, panY);
+      ctx.beginPath(); ctx.moveTo(x0, y0); ctx.lineTo(x0, y1); ctx.stroke();
+    }
+ 
+    // Draw land from GeoJSON
+    if (geoFeatures) {
+      ctx.fillStyle = "#1a3248";
+      ctx.strokeStyle = "#22405e";
+      ctx.lineWidth = 0.7;
+ 
+      for (const feature of geoFeatures) {
+        const geom = feature.geometry;
+        if (!geom) continue;
+        const polys = geom.type === "Polygon" ? [geom.coordinates]
+          : geom.type === "MultiPolygon" ? geom.coordinates : [];
+ 
+        for (const poly of polys) {
+          for (const ring of poly) {
+            // Check if the entire ring is completely outside our view — skip it.
+            let anyInBounds = false;
+            for (const [lng, lat] of ring) {
+              if (lng >= BOUNDS.minLng - 15 && lng <= BOUNDS.maxLng + 15 &&
+                  lat >= BOUNDS.minLat - 15 && lat <= BOUNDS.maxLat + 15) {
+                anyInBounds = true;
+                break;
+              }
+            }
+            if (!anyInBounds) continue;
+
+            // Draw this ring. When a point is outside our bounds we BREAK the
+            // current subpath (moveTo next in-bounds point) rather than skip it
+            // mid-lineTo — skipping mid-path causes huge diagonal artifacts
+            // across the canvas because canvas draws a straight line from the
+            // last drawn point to the next drawn point regardless of distance.
+            ctx.beginPath();
+            let penDown = false;
+            for (const [lng, lat] of ring) {
+              const outOfBounds = (
+                lng < BOUNDS.minLng - 15 || lng > BOUNDS.maxLng + 15 ||
+                lat < BOUNDS.minLat - 15 || lat > BOUNDS.maxLat + 15
+              );
+              if (outOfBounds) {
+                penDown = false; // lift pen — next in-bounds point starts a new subpath
+                continue;
+              }
+              const { nx, ny } = project(lat, lng);
+              const { x, y } = toCanvas(nx, ny, w, h, zoom, panX, panY);
+              if (!penDown) { ctx.moveTo(x, y); penDown = true; }
+              else ctx.lineTo(x, y);
+            }
+            ctx.closePath(); ctx.fill(); ctx.stroke();
+          }
+        }
+      }
+    }
+ 
+    // Draw place dots
+    const DOT_R = Math.max(8, Math.min(13, 10 * Math.sqrt(zoom)));
+ 
+    for (const p of placesNorm) {
+      const { x, y } = toCanvas(p.nx, p.ny, w, h, zoom, panX, panY);
+      if (x < -DOT_R * 2 || x > w + DOT_R * 2 || y < -DOT_R * 2 || y > h + DOT_R * 2) continue;
+ 
+      const color = RATING_COLORS[p.rating] || "#888";
+ 
+      // Outer glow
+      ctx.beginPath();
+      ctx.arc(x, y, DOT_R + 5, 0, Math.PI * 2);
+      ctx.fillStyle = color + "28";
+      ctx.fill();
+ 
+      // Main circle
+      ctx.beginPath();
+      ctx.arc(x, y, DOT_R, 0, Math.PI * 2);
+      ctx.fillStyle = color;
+      ctx.shadowColor = color;
+      ctx.shadowBlur = 8;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+ 
+      // Border
+      ctx.beginPath();
+      ctx.arc(x, y, DOT_R, 0, Math.PI * 2);
+      ctx.strokeStyle = "rgba(0,0,0,0.35)";
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+ 
+      // Rating number
+      ctx.fillStyle = "rgba(255,255,255,0.95)";
+      ctx.font = `bold ${Math.max(8, DOT_R * 0.82)}px DM Sans, sans-serif`;
+      ctx.textAlign = "center";
+      ctx.textBaseline = "middle";
+      ctx.fillText(String(p.rating), x, y);
+    }
+  }, [geoFeatures, placesNorm, zoom, panX, panY, w, h]);
+ 
+  // Hit-test: find place under cursor
+  const hitTest = useCallback((cx, cy) => {
+    const DOT_R = Math.max(8, Math.min(13, 10 * Math.sqrt(zoom)));
+    for (const p of placesNorm) {
+      const { x, y } = toCanvas(p.nx, p.ny, w, h, zoom, panX, panY);
+      const dist = Math.hypot(cx - x, cy - y);
+      if (dist < DOT_R + 4) return { p, sx: cx, sy: cy };
+    }
+    return null;
+  }, [placesNorm, zoom, panX, panY, w, h]);
+ 
+  // Mouse handlers
+  const onMouseDown = (e) => {
+    setTooltip(null);
+    isDragging.current = true;
+    dragStart.current = { x: e.clientX, y: e.clientY, panX, panY };
+  };
+  const onMouseMove = (e) => {
+    if (isDragging.current) {
+      const dx = e.clientX - dragStart.current.x;
+      const dy = e.clientY - dragStart.current.y;
+      const { px, py } = clampPan(dragStart.current.panX + dx, dragStart.current.panY + dy, zoom, w, h);
+      setPanX(px); setPanY(py);
+    }
+  };
+  const onMouseUp = (e) => {
+    const moved = Math.hypot(e.clientX - dragStart.current.x, e.clientY - dragStart.current.y);
+    isDragging.current = false;
+    if (moved < 5) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const cx = (e.clientX - rect.left) * (w / rect.width);
+      const cy = (e.clientY - rect.top) * (h / rect.height);
+      const hit = hitTest(cx, cy);
+      if (hit) {
+        setTooltip(hit.p);
+        setTooltipPos({ x: e.clientX - rect.left, y: e.clientY - rect.top });
+      } else {
+        setTooltip(null);
+      }
+    }
+  };
+  const onMouseLeave = () => { isDragging.current = false; };
+ 
+  // Scroll zoom
+  const onWheel = useCallback((e) => {
+    e.preventDefault();
+    const rect = canvasRef.current.getBoundingClientRect();
+    const cx = (e.clientX - rect.left) * (w / rect.width);
+    const cy = (e.clientY - rect.top) * (h / rect.height);
+    const delta = e.deltaY > 0 ? 0.85 : 1.18;
+    const newZoom = Math.max(1, Math.min(12, zoom * delta));
+    // Zoom toward cursor
+    const newPanX = cx - (cx - panX) * (newZoom / zoom);
+    const newPanY = cy - (cy - panY) * (newZoom / zoom);
+    const { px, py } = clampPan(newPanX, newPanY, newZoom, w, h);
+    setZoom(newZoom);
+    setPanX(px); setPanY(py);
+  }, [zoom, panX, panY, w, h, clampPan]);
+
+  // Attach wheel listener with passive:false so e.preventDefault() actually
+  // stops the page from scrolling — React's synthetic onWheel is passive by default.
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    canvas.addEventListener("wheel", onWheel, { passive: false });
+    return () => canvas.removeEventListener("wheel", onWheel);
+  }, [onWheel]);
+ 
+  // Touch handlers
+  const onTouchStart = (e) => {
+    if (e.touches.length === 1) {
+      isDragging.current = true;
+      dragStart.current = { x: e.touches[0].clientX, y: e.touches[0].clientY, panX, panY };
+    } else if (e.touches.length === 2) {
+      isDragging.current = false;
+      lastPinchDist.current = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+    }
+  };
+  const onTouchMove = (e) => {
+    e.preventDefault();
+    if (e.touches.length === 1 && isDragging.current) {
+      const dx = e.touches[0].clientX - dragStart.current.x;
+      const dy = e.touches[0].clientY - dragStart.current.y;
+      const { px, py } = clampPan(dragStart.current.panX + dx, dragStart.current.panY + dy, zoom, w, h);
+      setPanX(px); setPanY(py);
+    } else if (e.touches.length === 2 && lastPinchDist.current) {
+      const dist = Math.hypot(
+        e.touches[0].clientX - e.touches[1].clientX,
+        e.touches[0].clientY - e.touches[1].clientY
+      );
+      const delta = dist / lastPinchDist.current;
+      const midX = (e.touches[0].clientX + e.touches[1].clientX) / 2;
+      const midY = (e.touches[0].clientY + e.touches[1].clientY) / 2;
+      const rect = canvasRef.current.getBoundingClientRect();
+      const cx = (midX - rect.left) * (w / rect.width);
+      const cy = (midY - rect.top) * (h / rect.height);
+      const newZoom = Math.max(1, Math.min(12, zoom * delta));
+      const newPanX = cx - (cx - panX) * (newZoom / zoom);
+      const newPanY = cy - (cy - panY) * (newZoom / zoom);
+      const { px, py } = clampPan(newPanX, newPanY, newZoom, w, h);
+      setZoom(newZoom);
+      setPanX(px); setPanY(py);
+      lastPinchDist.current = dist;
+    }
+  };
+  const onTouchEnd = (e) => {
+    isDragging.current = false;
+    lastPinchDist.current = null;
+    if (e.changedTouches.length === 1) {
+      const moved = Math.hypot(
+        e.changedTouches[0].clientX - dragStart.current.x,
+        e.changedTouches[0].clientY - dragStart.current.y
+      );
+      if (moved < 8) {
+        const rect = canvasRef.current.getBoundingClientRect();
+        const cx = (e.changedTouches[0].clientX - rect.left) * (w / rect.width);
+        const cy = (e.changedTouches[0].clientY - rect.top) * (h / rect.height);
+        const hit = hitTest(cx, cy);
+        if (hit) { setTooltip(hit.p); setTooltipPos({ x: cx, y: cy }); }
+        else setTooltip(null);
+      }
+    }
+  };
+ 
+  // Zoom buttons
+  const zoomIn = () => {
+    const newZoom = Math.min(12, zoom * 1.5);
+    const cx = w / 2, cy = h / 2;
+    const newPanX = cx - (cx - panX) * (newZoom / zoom);
+    const newPanY = cy - (cy - panY) * (newZoom / zoom);
+    const { px, py } = clampPan(newPanX, newPanY, newZoom, w, h);
+    setZoom(newZoom); setPanX(px); setPanY(py);
+  };
+  const zoomOut = () => {
+    const newZoom = Math.max(1, zoom / 1.5);
+    const cx = w / 2, cy = h / 2;
+    const newPanX = cx - (cx - panX) * (newZoom / zoom);
+    const newPanY = cy - (cy - panY) * (newZoom / zoom);
+    const { px, py } = clampPan(newPanX, newPanY, newZoom, w, h);
+    setZoom(newZoom); setPanX(px); setPanY(py);
+  };
+  const resetZoom = () => { setZoom(1); setPanX(0); setPanY(0); setTooltip(null); };
+ 
+  // Tooltip dismiss on hover for canvas (use mouse position on canvas)
+  const onCanvasMouseMove = (e) => {
+    onMouseMove(e);
+    if (!isDragging.current) {
+      const rect = canvasRef.current.getBoundingClientRect();
+      const cx = (e.clientX - rect.left) * (w / rect.width);
+      const cy = (e.clientY - rect.top) * (h / rect.height);
+      const hit = hitTest(cx, cy);
+      canvasRef.current.style.cursor = hit ? "pointer" : isDragging.current ? "grabbing" : "grab";
+    }
+  };
+ 
+  return (
+    <div style={{ width: "100%", background: "#0a0e16" }}>
+      {/* Month selector */}
+      <div style={{ padding: "12px 16px 10px", background: "#0d1620", borderBottom: "1px solid #182435", display: "flex", alignItems: "center", gap: 5, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 10, color: "#2a4a60", letterSpacing: 2, textTransform: "uppercase", marginRight: 6, fontWeight: 700, flexShrink: 0 }}>Viewing:</span>
+        {ALL_MONTHS.map(m => (
+          <button key={m} onClick={() => setMapMonth(m)} style={{
+            padding: "5px 11px", borderRadius: 20, border: "1px solid",
+            borderColor: mapMonth === m ? "#7ec8e3" : "#182435",
+            background: mapMonth === m ? "#7ec8e325" : "transparent",
+            color: mapMonth === m ? "#7ec8e3" : "#3d6a80",
+            cursor: "pointer", fontSize: 11, fontWeight: mapMonth === m ? 800 : 500,
+            transition: "all 0.15s",
+          }}>{MONTH_FULL[m]}</button>
+        ))}
+      </div>
+ 
+      {/* Rating legend */}
+      <div style={{ padding: "7px 16px", background: "#0a0e16", borderBottom: "1px solid #182435", display: "flex", alignItems: "center", gap: 10, flexWrap: "wrap" }}>
+        <span style={{ fontSize: 10, color: "#2a4a60", letterSpacing: 1, textTransform: "uppercase", flexShrink: 0 }}>Rating:</span>
+        {[[1,"#c0392b","Avoid"],[3,"#e67e22","Poor"],[5,"#f1c40f","Avg"],[6,"#d4ac0d","Decent"],[7,"#27ae60","Good"],[8,"#1e8449","Great"],[9,"#148f77","Excellent"],[10,"#0e6655","Perfect"]].map(([r,c,label]) => (
+          <div key={r} style={{ display: "flex", alignItems: "center", gap: 4 }}>
+            <div style={{ width: 17, height: 17, borderRadius: "50%", background: c, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0 }}>
+              <span style={{ fontSize: 8, fontWeight: 800, color: "rgba(255,255,255,0.92)" }}>{r}</span>
+            </div>
+            <span style={{ fontSize: 10, color: "#3d6a80" }}>{label}</span>
+          </div>
+        ))}
+      </div>
+ 
+      {/* Canvas map container */}
+      <div ref={containerRef} style={{ position: "relative", width: "100%", background: "#0d1e30", overflow: "hidden", userSelect: "none" }}>
+        <canvas
+          ref={canvasRef}
+          style={{ display: "block", width: "100%", height: dims.h, cursor: "grab", touchAction: "none" }}
+          onMouseDown={onMouseDown}
+          onMouseMove={onCanvasMouseMove}
+          onMouseUp={onMouseUp}
+          onMouseLeave={onMouseLeave}
+          onTouchStart={onTouchStart}
+          onTouchMove={onTouchMove}
+          onTouchEnd={onTouchEnd}
+        />
+ 
+        {/* Loading overlay */}
+        {loadingGeo && (
+          <div style={{ position: "absolute", inset: 0, display: "flex", alignItems: "center", justifyContent: "center", background: "#0d1e30cc" }}>
+            <div style={{ color: "#3d6a80", fontSize: 13 }}>Loading map…</div>
+          </div>
+        )}
+ 
+        {/* Month label */}
+        <div style={{ position: "absolute", top: 10, right: 10, background: "#0a1520cc", border: "1px solid #1e3a55", borderRadius: 5, padding: "3px 7px", backdropFilter: "blur(6px)", pointerEvents: "none" }}>
+          <div style={{ fontSize: 11, fontWeight: 800, color: "#7ec8e3", textAlign: "center" }}>{MONTH_FULL[mapMonth]}</div>
+        </div>
+ 
+        {/* Zoom controls */}
+        <div style={{ position: "absolute", bottom: 14, right: 10, display: "flex", flexDirection: "column", gap: 6 }}>
+          {[["＋", zoomIn], ["－", zoomOut], ["⟳", resetZoom]].map(([label, fn]) => (
+            <button key={label} onClick={fn} style={{
+              width: 34, height: 34, borderRadius: 8,
+              background: "#0f1e30", border: "1px solid #2a4a65",
+              color: "#7ec8e3", fontSize: label === "⟳" ? 16 : 20, fontWeight: 700,
+              cursor: "pointer", display: "flex", alignItems: "center", justifyContent: "center",
+              boxShadow: "0 2px 8px rgba(0,0,0,0.4)", lineHeight: 1,
+            }}>{label}</button>
+          ))}
+        </div>
+ 
+        {/* Zoom level indicator */}
+        {zoom > 1.05 && (
+          <div style={{ position: "absolute", bottom: 14, left: 10, background: "#0a1520cc", border: "1px solid #1e3a55", borderRadius: 6, padding: "4px 10px", fontSize: 10, color: "#3d6a80" }}>
+            {zoom.toFixed(1)}×
+          </div>
+        )}
+ 
+        {/* Tooltip */}
+        {tooltip && (() => {
+          const color = RATING_COLORS[tooltip.rating] || "#888";
+          const left = tooltipPos.x > dims.w * 0.6 ? tooltipPos.x - 240 : tooltipPos.x + 16;
+          const top = Math.max(8, Math.min(tooltipPos.y - 20, dims.h - 140));
+          return (
+            <div style={{
+              position: "absolute", left, top,
+              width: 230, background: "#0a1520f0",
+              border: `1px solid ${color}`,
+              borderRadius: 10, padding: "12px 14px",
+              pointerEvents: "none", boxShadow: `0 4px 20px ${color}33`,
+            }}>
+              <div style={{ display: "flex", alignItems: "flex-start", justifyContent: "space-between", marginBottom: 6 }}>
+                <div>
+                  <div style={{ fontWeight: 700, fontSize: 14, color: "#c8e0ec" }}>{tooltip.place}</div>
+                  <div style={{ fontSize: 10, color: "#3d6a80", marginTop: 2 }}>{tooltip.country} · {tooltip.region}</div>
+                </div>
+                <div style={{ width: 36, height: 36, borderRadius: "50%", background: color, display: "flex", alignItems: "center", justifyContent: "center", flexShrink: 0, marginLeft: 8 }}>
+                  <span style={{ fontWeight: 900, fontSize: 14, color: "#fff" }}>{tooltip.rating}</span>
+                </div>
+              </div>
+              <div style={{ fontSize: 10, color: "#3d7a9e", fontStyle: "italic", marginBottom: 5 }}>{RATING_LABELS[tooltip.rating]} · {MONTH_FULL[mapMonth]}</div>
+              <div style={{ fontSize: 11, color: "#4a7a90", lineHeight: 1.55 }}>{tooltip.desc}</div>
+            </div>
+          );
+        })()}
+      </div>
+ 
+      <div style={{ padding: "7px 16px", background: "#0a0e16", borderTop: "1px solid #182435", fontSize: 10, color: "#1e3a50", textAlign: "center" }}>
+        Scroll / pinch to zoom · Drag to pan · Click a dot for details
+      </div>
+    </div>
+  );
+}
+ 
+// ─── TOPOJSON TO GEOJSON (inline, no dependency) ──────────────────────────────
+function topoToGeo(topology, o) {
+  const arcs = topology.arcs;
+  const scale = topology.transform?.scale || [1, 1];
+  const translate = topology.transform?.translate || [0, 0];
+ 
+  function decodeArc(idx) {
+    const raw = arcs[idx < 0 ? ~idx : idx];
+    // Delta-decode the arc (coordinates are stored as cumulative deltas)
+    let x = 0, y = 0;
+    const decoded = raw.map(([dx, dy]) => {
+      x += dx; y += dy;
+      return [x * scale[0] + translate[0], y * scale[1] + translate[1]];
+    });
+    // Reverse AFTER decoding for negative arc indices (shared border, opposite winding)
+    return idx < 0 ? decoded.reverse() : decoded;
+  }
+ 
+  function decodeRing(arcIndices) {
+    const coords = [];
+    for (const idx of arcIndices) {
+      const pts = decodeArc(idx);
+      if (coords.length > 0) pts.shift(); // avoid duplicate junction point
+      coords.push(...pts);
+    }
+    return coords;
+  }
+ 
+  function decodeGeometry(geom) {
+    if (geom.type === "Polygon") {
+      return { type: "Polygon", coordinates: geom.arcs.map(decodeRing) };
+    } else if (geom.type === "MultiPolygon") {
+      return { type: "MultiPolygon", coordinates: geom.arcs.map(p => p.map(decodeRing)) };
+    }
+    return null;
+  }
+ 
+  const features = o.geometries.map(g => ({
+    type: "Feature",
+    properties: g.properties || {},
+    geometry: decodeGeometry(g),
+  })).filter(f => f.geometry !== null);
+ 
+  return { type: "FeatureCollection", features };
+}
+ 
+// ─── MAIN APP ─────────────────────────────────────────────────────────────────
 export default function App() {
-  const [selectedCountry, setSelectedCountry] = useState("All");
-  const [selectedMonth, setSelectedMonth] = useState(null);
+  const [view, setView] = useState("list");
+  const [selectedCountries, setSelectedCountries] = useState(new Set());
+  const [selectedMonths, setSelectedMonths] = useState(new Set());
   const [search, setSearch] = useState("");
   const [expanded, setExpanded] = useState({});
-  const [sortBy, setSortBy] = useState(null); // null = natural, or a month key
+  const [sortByRating, setSortByRating] = useState(false);
+  const [mapMonth, setMapMonth] = useState(CURRENT_MONTH);
 
+  const toggleCountry = (c) => setSelectedCountries(prev => {
+    const next = new Set(prev);
+    next.has(c) ? next.delete(c) : next.add(c);
+    return next;
+  });
+
+  const toggleMonth = (m) => setSelectedMonths(prev => {
+    const next = new Set(prev);
+    next.has(m) ? next.delete(m) : next.add(m);
+    return next;
+  });
+ 
   const filtered = useMemo(() => {
     return data.filter(d => {
-      const countryMatch = selectedCountry === "All" || d.country === selectedCountry;
+      const countryMatch = selectedCountries.size === 0 || selectedCountries.has(d.country);
       const searchMatch = !search ||
         d.place.toLowerCase().includes(search.toLowerCase()) ||
         d.country.toLowerCase().includes(search.toLowerCase()) ||
         d.region.toLowerCase().includes(search.toLowerCase());
       return countryMatch && searchMatch;
     });
-  }, [selectedCountry, search]);
+  }, [selectedCountries, search]);
+
+  const monthsToShow = selectedMonths.size > 0
+    ? ALL_MONTHS.filter(m => selectedMonths.has(m))
+    : ALL_MONTHS;
 
   const sorted = useMemo(() => {
-    if (!sortBy) return filtered;
-    return [...filtered].sort((a, b) => (b.months[sortBy]?.r || 0) - (a.months[sortBy]?.r || 0));
-  }, [filtered, sortBy]);
+    if (!sortByRating) return filtered;
+    return [...filtered].sort((a, b) => {
+      const avgA = monthsToShow.reduce((s, m) => s + (a.months[m]?.r || 0), 0) / monthsToShow.length;
+      const avgB = monthsToShow.reduce((s, m) => s + (b.months[m]?.r || 0), 0) / monthsToShow.length;
+      return avgB - avgA;
+    });
+  }, [filtered, sortByRating, monthsToShow]);
 
   const grouped = useMemo(() => {
-    if (sortBy) return { "Sorted by rating": sorted };
+    if (sortByRating) return { "__sorted__": sorted };
     const g = {};
     sorted.forEach(d => {
       if (!g[d.country]) g[d.country] = {};
@@ -1506,158 +2137,151 @@ export default function App() {
       g[d.country][d.region].push(d);
     });
     return g;
-  }, [sorted, sortBy]);
+  }, [sorted, sortByRating]);
 
   const toggle = (key) => setExpanded(e => ({ ...e, [key]: !e[key] }));
-
-  const monthsToShow = selectedMonth ? [selectedMonth] : ALL_MONTHS;
-
+ 
   return (
-    <div style={{ minHeight: "100vh", background: "#0a0e16", fontFamily: "'DM Sans', sans-serif", color: "#d8e4f0", paddingBottom: 80 }}>
+    <div style={{ minHeight: "100vh", background: "#0a0e16", fontFamily: "'DM Sans', sans-serif", color: "#d8e4f0" }}>
       <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;1,400&family=Playfair+Display:wght@700;900&display=swap" rel="stylesheet" />
-
+ 
       {/* HEADER */}
-      <div style={{ background: "linear-gradient(160deg, #0f1927 0%, #0a0e16 70%)", borderBottom: "1px solid #182435", padding: "40px 24px 32px", textAlign: "center" }}>
-        <div style={{ fontSize: 10, letterSpacing: 5, color: "#3d7a9e", fontWeight: 600, marginBottom: 12, textTransform: "uppercase" }}>Asia Travel Weather Guide</div>
-        <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(26px, 5vw, 50px)", fontWeight: 900, margin: 0, background: "linear-gradient(90deg, #6ab4d4, #a8d4e8, #6ab4d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1.1 }}>
+      <div style={{ background: "linear-gradient(160deg, #0f1927 0%, #0a0e16 70%)", borderBottom: "1px solid #182435", padding: "32px 24px 24px", textAlign: "center" }}>
+        <div style={{ fontSize: 10, letterSpacing: 5, color: "#3d7a9e", fontWeight: 600, marginBottom: 10, textTransform: "uppercase" }}>Asia Travel Weather Guide</div>
+        <h1 style={{ fontFamily: "'Playfair Display', serif", fontSize: "clamp(24px, 4vw, 46px)", fontWeight: 900, margin: 0, background: "linear-gradient(90deg, #6ab4d4, #a8d4e8, #6ab4d4)", WebkitBackgroundClip: "text", WebkitTextFillColor: "transparent", lineHeight: 1.1 }}>
           Best Times to Visit
         </h1>
-        <p style={{ color: "#3d6a80", fontSize: 13, marginTop: 10, fontWeight: 300 }}>
+        <p style={{ color: "#3d6a80", fontSize: 13, marginTop: 8, fontWeight: 300, marginBottom: 18 }}>
           55 destinations · 12 months each · Accurate seasonal ratings
         </p>
-      </div>
-
-      {/* STICKY CONTROLS */}
-      <div style={{ position: "sticky", top: 0, zIndex: 100, background: "#0a0e16ee", backdropFilter: "blur(14px)", borderBottom: "1px solid #182435", padding: "12px 16px" }}>
-
-        {/* Search + country filter */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 10 }}>
-          <input
-            placeholder="🔍 Search destination…"
-            value={search}
-            onChange={e => setSearch(e.target.value)}
-            style={{ background: "#111b27", border: "1px solid #1e3045", borderRadius: 8, padding: "7px 13px", color: "#d8e4f0", fontSize: 13, width: 190, outline: "none" }}
-          />
-          <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
-            {["All", ...countries].map(c => (
-              <button key={c} onClick={() => setSelectedCountry(c)} style={{
-                padding: "5px 11px", borderRadius: 18, border: "1px solid",
-                borderColor: selectedCountry === c ? "#5aa0c0" : "#182435",
-                background: selectedCountry === c ? "#5aa0c015" : "transparent",
-                color: selectedCountry === c ? "#7ec8e3" : "#3d6a80",
-                cursor: "pointer", fontSize: 11, fontWeight: selectedCountry === c ? 700 : 400,
-              }}>{c}</button>
-            ))}
-          </div>
-        </div>
-
-        {/* Month filter + sort */}
-        <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" }}>
-          <span style={{ fontSize: 10, color: "#2a4a60", letterSpacing: 2, textTransform: "uppercase", marginRight: 4 }}>Filter/Sort:</span>
-          {ALL_MONTHS.map(m => (
-            <button key={m} onClick={() => {
-              if (selectedMonth === m) { setSelectedMonth(null); setSortBy(null); }
-              else { setSelectedMonth(m); setSortBy(m); }
-            }} style={{
-              padding: "4px 10px", borderRadius: 16, border: "1px solid",
-              borderColor: selectedMonth === m ? "#7ec8e3" : "#182435",
-              background: selectedMonth === m ? "#7ec8e322" : "transparent",
-              color: selectedMonth === m ? "#7ec8e3" : "#3d6a80",
-              cursor: "pointer", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
-            }}>{MONTH_LABELS[m]}</button>
+        <div style={{ display: "inline-flex", background: "#0f1927", border: "1px solid #182435", borderRadius: 24, padding: 3, gap: 2 }}>
+          {[["list","≡  List View"],["map","⊙  Map View"]].map(([v, label]) => (
+            <button key={v} onClick={() => setView(v)} style={{
+              padding: "8px 22px", borderRadius: 20, border: "none",
+              background: view === v ? "#7ec8e3" : "transparent",
+              color: view === v ? "#0a0e16" : "#3d6a80",
+              cursor: "pointer", fontSize: 13, fontWeight: view === v ? 700 : 500,
+              transition: "all 0.2s",
+            }}>{label}</button>
           ))}
-          {selectedMonth && <button onClick={() => { setSelectedMonth(null); setSortBy(null); }} style={{ padding: "4px 10px", borderRadius: 16, border: "1px solid #3d6a80", background: "transparent", color: "#3d6a80", cursor: "pointer", fontSize: 11 }}>✕ All months</button>}
         </div>
       </div>
-
-      {/* CONTENT */}
-      <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 14px" }}>
-        {Object.entries(grouped).map(([country, regsOrArr]) => {
-          const isSorted = sortBy && country === "Sorted by rating";
-          return (
-            <div key={country} style={{ marginBottom: 44 }}>
-              {!isSorted && (
-                <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid #182435" }}>
-                  <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, margin: 0, color: "#a8d0e0", fontWeight: 700 }}>{country}</h2>
-                </div>
-              )}
-
-              {isSorted ? (
-                <PlaceList places={sorted} monthsToShow={monthsToShow} expanded={expanded} toggle={toggle} selectedMonth={selectedMonth} />
-              ) : (
-                Object.entries(regsOrArr).map(([region, places]) => (
-                  <div key={region} style={{ marginBottom: 22 }}>
-                    <div style={{ fontSize: 13, letterSpacing: 3, color: "#3b6d92", textTransform: "uppercase", marginBottom: 10, fontWeight: 700 }}>{region}</div>
-                    <PlaceList places={places} monthsToShow={monthsToShow} expanded={expanded} toggle={toggle} selectedMonth={selectedMonth} />
-                  </div>
-                ))
-              )}
+ 
+      {view === "map" && <MapView mapMonth={mapMonth} setMapMonth={setMapMonth} />}
+ 
+      {view === "list" && (
+        <>
+          <div style={{ position: "sticky", top: 0, zIndex: 100, background: "#0a0e16ee", backdropFilter: "blur(14px)", borderBottom: "1px solid #182435", padding: "12px 16px" }}>
+            <div style={{ display: "flex", flexWrap: "wrap", gap: 8, alignItems: "center", marginBottom: 10 }}>
+              <input
+                placeholder="🔍 Search destination…"
+                value={search}
+                onChange={e => setSearch(e.target.value)}
+                style={{ background: "#111b27", border: "1px solid #1e3045", borderRadius: 8, padding: "7px 13px", color: "#d8e4f0", fontSize: 13, width: 190, outline: "none" }}
+              />
+              <div style={{ display: "flex", gap: 5, flexWrap: "wrap" }}>
+                {countries.map(c => (
+                  <button key={c} onClick={() => toggleCountry(c)} style={{
+                    padding: "5px 11px", borderRadius: 18, border: "1px solid",
+                    borderColor: selectedCountries.has(c) ? "#5aa0c0" : "#182435",
+                    background: selectedCountries.has(c) ? "#5aa0c015" : "transparent",
+                    color: selectedCountries.has(c) ? "#7ec8e3" : "#3d6a80",
+                    cursor: "pointer", fontSize: 11, fontWeight: selectedCountries.has(c) ? 700 : 400,
+                  }}>{c}</button>
+                ))}
+                {selectedCountries.size > 0 && (
+                  <button onClick={() => setSelectedCountries(new Set())} style={{ padding: "5px 11px", borderRadius: 18, border: "1px solid #3d6a80", background: "transparent", color: "#3d6a80", cursor: "pointer", fontSize: 11 }}>✕ All</button>
+                )}
+              </div>
             </div>
-          );
-        })}
-      </div>
-
+            <div style={{ display: "flex", gap: 5, flexWrap: "wrap", alignItems: "center" }}>
+              <span style={{ fontSize: 10, color: "#2a4a60", letterSpacing: 2, textTransform: "uppercase", marginRight: 4 }}>Filter/Sort:</span>
+              {ALL_MONTHS.map(m => (
+                <button key={m} onClick={() => toggleMonth(m)} style={{
+                  padding: "4px 10px", borderRadius: 16, border: "1px solid",
+                  borderColor: selectedMonths.has(m) ? "#7ec8e3" : "#182435",
+                  background: selectedMonths.has(m) ? "#7ec8e322" : "transparent",
+                  color: selectedMonths.has(m) ? "#7ec8e3" : "#3d6a80",
+                  cursor: "pointer", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+                }}>{MONTH_LABELS[m]}</button>
+              ))}
+              {selectedMonths.size > 0 && (
+                <button onClick={() => setSelectedMonths(new Set())} style={{ padding: "4px 10px", borderRadius: 16, border: "1px solid #3d6a80", background: "transparent", color: "#3d6a80", cursor: "pointer", fontSize: 11 }}>✕ All months</button>
+              )}
+              <div style={{ width: 1, height: 16, background: "#182435", margin: "0 4px" }} />
+              <button onClick={() => setSortByRating(s => !s)} style={{
+                padding: "4px 12px", borderRadius: 16, border: "1px solid",
+                borderColor: sortByRating ? "#a78bfa" : "#182435",
+                background: sortByRating ? "#a78bfa22" : "transparent",
+                color: sortByRating ? "#a78bfa" : "#3d6a80",
+                cursor: "pointer", fontSize: 11, fontWeight: 700, letterSpacing: 0.5,
+              }}>⭐ Sort by rating</button>
+            </div>
+          </div>
+          <div style={{ maxWidth: 1100, margin: "0 auto", padding: "24px 14px 60px" }}>
+            {sortByRating ? (
+              <PlaceList places={sorted} monthsToShow={monthsToShow} expanded={expanded} toggle={toggle} selectedMonths={selectedMonths} showMeta />
+            ) : (
+              Object.entries(grouped).map(([country, regsOrArr]) => (
+                <div key={country} style={{ marginBottom: 44 }}>
+                  <div style={{ display: "flex", alignItems: "center", gap: 10, marginBottom: 16, paddingBottom: 10, borderBottom: "1px solid #182435" }}>
+                    <h2 style={{ fontFamily: "'Playfair Display', serif", fontSize: 20, margin: 0, color: "#a8d0e0", fontWeight: 700 }}>{country}</h2>
+                  </div>
+                  {Object.entries(regsOrArr).map(([region, places]) => (
+                    <div key={region} style={{ marginBottom: 22 }}>
+                      <div style={{ fontSize: 10, letterSpacing: 3, color: "#1e3a50", textTransform: "uppercase", marginBottom: 10, fontWeight: 700 }}>{region}</div>
+                      <PlaceList places={places} monthsToShow={monthsToShow} expanded={expanded} toggle={toggle} selectedMonths={selectedMonths} />
+                    </div>
+                  ))}
+                </div>
+              ))
+            )}
+          </div>
+        </>
+      )}
     </div>
   );
 }
-
-function PlaceList({ places, monthsToShow, expanded, toggle, selectedMonth }) {
+ 
+function PlaceList({ places, monthsToShow, expanded, toggle, selectedMonths, showMeta }) {
+  const ratingEmoji = (r) => ["", "💀", "🌧", "😬", "😕", "😐", "🙂", "😊", "😄", "🌟", "✨"][r] || "";
   return (
     <div style={{ display: "flex", flexDirection: "column", gap: 8 }}>
       {places.map(place => {
         const key = `${place.country}-${place.region}-${place.place}`;
         const isOpen = expanded[key];
-
-        // build month strip
-        const visibleMonths = monthsToShow;
-
         return (
           <div key={key} style={{ background: "#0f1927", border: `1px solid ${isOpen ? "#2a4a65" : "#182435"}`, borderRadius: 12, overflow: "hidden" }}>
-
-            {/* ROW */}
-            <div onClick={() => toggle(key)} style={{ display: "flex", alignItems: "center", gap: 10, padding: "12px 16px", cursor: "pointer", userSelect: "none" }}>
-              <div style={{ flex: 1, minWidth: 0 }}>
-                <div style={{ fontWeight: 600, fontSize: 14, color: "#c8e0ec" }}>{place.place}</div>
-                {selectedMonth && (
-                  <div style={{ fontSize: 11, color: "#2e5570", marginTop: 2 }}>{place.country} · {place.region}</div>
-                )}
+            <div onClick={() => toggle(key)} style={{ display: "flex", flexDirection: "column", gap: 6, padding: "12px 16px", cursor: "pointer", userSelect: "none" }}>
+              <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between" }}>
+                <div>
+                  <div style={{ fontWeight: 600, fontSize: 14, color: "#c8e0ec" }}>{place.place}</div>
+                  {(showMeta || selectedMonths.size > 0) && <div style={{ fontSize: 11, color: "#2e5570", marginTop: 2 }}>{place.country} · {place.region}</div>}
+                </div>
+                <div style={{ color: "#1e3a50", fontSize: 18, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "none", marginLeft: 8, flexShrink: 0 }}>›</div>
               </div>
-
-              {/* Month pills */}
-              <div style={{ display: "flex", gap: 3, flexWrap: "nowrap", overflowX: "auto" }}>
-                {visibleMonths.map(m => {
+              <div style={{ display: "flex", gap: 2, flexWrap: "nowrap" }}>
+                {monthsToShow.map(m => {
                   const info = place.months[m];
                   if (!info) return null;
                   const r = info.r;
                   const color = RATING_COLORS[r];
                   return (
-                    <div key={m} style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 36 }}>
-                      <div style={{ fontSize: 9, color: "#2a4a65", marginBottom: 2 }}>{MONTH_LABELS[m]}</div>
-                      <div style={{
-                        background: color + "20", border: `1px solid ${color}50`,
-                        borderRadius: 6, padding: "3px 0", width: 36, textAlign: "center",
-                        fontSize: 12, fontWeight: 800, color,
-                      }}>{r}</div>
+                    <div key={m} style={{ display: "flex", flexDirection: "column", alignItems: "center", minWidth: 28, flex: 1 }}>
+                      <div style={{ fontSize: 8, color: "#2a4a65", marginBottom: 2 }}>{MONTH_LABELS[m]}</div>
+                      <div style={{ background: color + "20", border: `1px solid ${color}50`, borderRadius: 6, padding: "3px 0", width: "100%", textAlign: "center", fontSize: 11, fontWeight: 800, color }}>{r}</div>
                     </div>
                   );
                 })}
               </div>
-
-              <div style={{ color: "#1e3a50", fontSize: 18, transition: "transform 0.2s", transform: isOpen ? "rotate(90deg)" : "none", marginLeft: 4 }}>›</div>
             </div>
-
-            {/* EXPANDED */}
             {isOpen && (
               <div style={{ padding: "0 16px 16px", borderTop: "1px solid #182435", paddingTop: 14 }}>
-                {/* Worst times */}
                 <div style={{ background: "#1a0c0c", border: "1px solid #3d1a1a", borderRadius: 8, padding: "9px 13px", marginBottom: 14, fontSize: 12.5, color: "#b06060" }}>
-                  <span style={{ fontWeight: 700, color: "#d05050" }}>⚠ Worst times to visit: </span>
-                  {place.worstTimes}
+                  <span style={{ fontWeight: 700, color: "#d05050" }}>⚠ Worst times: </span>{place.worstTimes}
                 </div>
-
-                {/* Monthly grid */}
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(175px, 1fr))", gap: 8 }}>
-                  {visibleMonths.map(m => {
+                  {monthsToShow.map(m => {
                     const info = place.months[m];
                     if (!info) return null;
                     const r = info.r;
@@ -1666,11 +2290,9 @@ function PlaceList({ places, monthsToShow, expanded, toggle, selectedMonth }) {
                       <div key={m} style={{ background: "#0a0e16", border: `1px solid ${color}28`, borderRadius: 10, padding: "11px 13px" }}>
                         <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 7 }}>
                           <span style={{ fontWeight: 700, fontSize: 13, color: "#a8ccd8" }}>{MONTH_LABELS[m]}</span>
-                          <div style={{ background: color + "22", border: `1px solid ${color}55`, borderRadius: 20, padding: "2px 10px", fontSize: 12, fontWeight: 800, color }}>
-                            {r}/10
-                          </div>
+                          <div style={{ background: color + "22", border: `1px solid ${color}55`, borderRadius: 20, padding: "2px 10px", fontSize: 12, fontWeight: 800, color, display: "flex", alignItems: "center", gap: 5 }}><span style={{ fontSize: 13 }}>{ratingEmoji(r)}</span>{r}/10</div>
                         </div>
-                        <div style={{ fontSize: 11, color: "#3d7a9e", fontStyle: "italic", fontSize: 10, marginBottom: 4 }}>{RATING_LABELS[r]}</div>
+                        <div style={{ fontSize: 10, color: "#3d7a9e", fontStyle: "italic", marginBottom: 4 }}>{RATING_LABELS[r]}</div>
                         <p style={{ fontSize: 12, color: "#527a8a", margin: 0, lineHeight: 1.55 }}>{info.d}</p>
                       </div>
                     );
@@ -1684,3 +2306,4 @@ function PlaceList({ places, monthsToShow, expanded, toggle, selectedMonth }) {
     </div>
   );
 }
+ 
